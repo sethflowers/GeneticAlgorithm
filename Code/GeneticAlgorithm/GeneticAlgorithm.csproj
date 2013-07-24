@@ -53,6 +53,7 @@
     <Compile Include="ChromosomeSelector.cs" />
     <Compile Include="ChromosomeValidator.cs" />
     <Compile Include="DistinctGeneValidator.cs" />
+    <Compile Include="EventArgs.cs" />
     <Compile Include="GA.cs" />
     <Compile Include="GenericFitnessCalculator.cs" />
     <Compile Include="GlobalSuppressions.cs" />

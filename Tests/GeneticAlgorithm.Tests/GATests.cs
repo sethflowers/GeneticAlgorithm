@@ -73,6 +73,14 @@ namespace GeneticAlgorithm.Tests
             populationEvolver.Setup(p => p.Evolve(generationThree)).Returns(generationFour);
             populationEvolver.Setup(p => p.Evolve(generationFour)).Returns(generationFive);
 
+            // Add chromosomes to each generation.
+            beginningPopulation.Add(new Chromosome<int>(new[] { 0 }));
+            generationOne.Add(new Chromosome<int>(new[] { 1 }));
+            generationTwo.Add(new Chromosome<int>(new[] { 2 }));
+            generationThree.Add(new Chromosome<int>(new[] { 3 }));
+            generationFour.Add(new Chromosome<int>(new[] { 4 }));
+            generationFive.Add(new Chromosome<int>(new[] { 5 }));
+
             // Execute the code to test.
             ChromosomeCollection<int> endingPopulation = ga.Run(beginningPopulation, numberOfGenerations: 5);
 
@@ -101,10 +109,10 @@ namespace GeneticAlgorithm.Tests
             ChromosomeCollection<int> generationTwo = new ChromosomeCollection<int>();
 
             // Add chromosomes to each generation.
-            beginningPopulation.Add(new Chromosome<int>(new[] { 1 }));
-            generationOne.Add(new Chromosome<int>(new[] { 2 }));
-            generationTwo.Add(new Chromosome<int>(new[] { 3 }));
-            
+            beginningPopulation.Add(new Chromosome<int>(new[] { 0 }));
+            generationOne.Add(new Chromosome<int>(new[] { 1 }));
+            generationTwo.Add(new Chromosome<int>(new[] { 2 }));
+
             // Setup the population evolver to return the desired generation when given the previous generation.
             populationEvolver.Setup(p => p.Evolve(beginningPopulation)).Returns(generationOne);
             populationEvolver.Setup(p => p.Evolve(generationOne)).Returns(generationTwo);
@@ -119,6 +127,53 @@ namespace GeneticAlgorithm.Tests
             Assert.IsTrue(beginningPopulation.All(c => c.Fitness == 1), "Beginning Population");
             Assert.IsTrue(generationOne.All(c => c.Fitness == 1), "Generation one Population");
             Assert.IsTrue(generationTwo.All(c => c.Fitness == 1), "Generation two (ending) Population");
+        }
+
+        /// <summary>
+        /// Validates that the epoch event is fired for each generation.
+        /// </summary>
+        [TestMethod]
+        public void Run_FiresEpochEventForEachGeneration()
+        {
+            // Setup the mock dependencies of the GA.
+            Mock<PopulationEvolver<int>> populationEvolver = new Mock<PopulationEvolver<int>>(null);
+            Mock<ChromosomeFitnessCalculator<int>> fitnessCalculator = new Mock<ChromosomeFitnessCalculator<int>>();
+
+            // Setup the GA with the mock dependencies.
+            GA<int> ga = new GA<int>(fitnessCalculator.Object, populationEvolver.Object);
+
+            // Setup the population that will be passed into the GA.
+            ChromosomeCollection<int> beginningPopulation = new ChromosomeCollection<int>();
+
+            // Setup several other generations.
+            ChromosomeCollection<int> generationOne = new ChromosomeCollection<int>();
+            ChromosomeCollection<int> generationTwo = new ChromosomeCollection<int>();
+            ChromosomeCollection<int> generationThree = new ChromosomeCollection<int>();
+
+            // Setup the population evolver to return the desired generation when given the previous generation.
+            populationEvolver.Setup(p => p.Evolve(beginningPopulation)).Returns(generationOne);
+            populationEvolver.Setup(p => p.Evolve(generationOne)).Returns(generationTwo);
+            populationEvolver.Setup(p => p.Evolve(generationTwo)).Returns(generationThree);
+
+            // Add chromosomes to each generation.
+            beginningPopulation.Add(new Chromosome<int>(new[] { 0 }));
+            generationOne.Add(new Chromosome<int>(new[] { 1 }));
+            generationTwo.Add(new Chromosome<int>(new[] { 2 }));
+            generationThree.Add(new Chromosome<int>(new[] { 3 }));
+
+            List<ChromosomeCollection<int>> generationsEpoched = new List<ChromosomeCollection<int>>();
+
+            // Attach to the epoch event, capturing which generations were epoched.
+            ga.Epoch += (o, e) => generationsEpoched.Add(e.Data);
+
+            // Execute the code to test.
+            ga.Run(beginningPopulation, numberOfGenerations: 3);
+
+            // Validate that the event was raised for each generation epoched.
+            Assert.AreEqual(3, generationsEpoched.Count, "Count");
+            Assert.AreEqual(generationOne, generationsEpoched[0], "Generation One");
+            Assert.AreEqual(generationTwo, generationsEpoched[1], "Generation Two");
+            Assert.AreEqual(generationThree, generationsEpoched[2], "Generation Three");
         }
     }
 }

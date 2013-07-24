@@ -44,6 +44,11 @@ namespace GeneticAlgorithm
         }
 
         /// <summary>
+        /// Occurs at the end of every epoch, and contains the newest generation of chromosomes created.
+        /// </summary>
+        public event EventHandler<EventArgs<ChromosomeCollection<T>>> Epoch = delegate { };
+
+        /// <summary>
         /// Runs the genetic algorithm the given number of generations, starting with the beginning population of chromosomes as the first generation.
         /// </summary>
         /// <param name="beginningPopulation">The beginning population of chromosomes that make up the possible solutions to the problem
@@ -75,9 +80,25 @@ namespace GeneticAlgorithm
 
                 // Set the fitness for each chromosome in the population.
                 this.UpdateFitnessOnPopulation(currentPopulation);
+
+                // Let any clients know that we have just reached a new generation.
+                this.OnEpoch(new EventArgs<ChromosomeCollection<T>>(currentPopulation));
             }
 
             return currentPopulation;
+        }
+
+        /// <summary>
+        /// Called when the Epoch event is ready to be fired.
+        /// </summary>
+        /// <param name="eventArgs">The event args to supply when raising the Epoch event.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Justification = "Creating an extra empty class for this is not worth fixing this rule.")]
+        protected virtual void OnEpoch(EventArgs<ChromosomeCollection<T>> eventArgs)
+        {
+            // Fire the event.
+            // Note that we don't have to check for null, 
+            // since we have an anonymous NO-OP delegate assigned to it.
+            this.Epoch(this, eventArgs);
         }
 
         /// <summary>
