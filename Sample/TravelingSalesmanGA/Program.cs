@@ -33,7 +33,8 @@ namespace TravelingSalesmanGA
             ChromosomeCollection<City> endingPopulation =
                 geneticAlgorithm.Run(beginningPopulation, numberOfGenerations: 1000);
 
-            Chromosome<City> bestChromosome = GetBestChromosome(endingPopulation);
+            Chromosome<City> bestChromosome = endingPopulation
+                .OrderByDescending(c => c.Fitness).First();
 
             Console.WriteLine("Best Fitness: {0}{1}", bestChromosome.Fitness, Environment.NewLine);
 
@@ -43,29 +44,6 @@ namespace TravelingSalesmanGA
             }
 
             Console.ReadLine();
-        }
-
-        /// <summary>
-        /// Gets the most fit chromosome from the given population of chromosomes.
-        /// </summary>
-        /// <param name="chromosomes">The chromosomes.</param>
-        /// <returns>Returns the most fit chromosome from the given population of chromosomes.</returns>
-        private static Chromosome<City> GetBestChromosome(
-            ChromosomeCollection<City> chromosomes)
-        {
-            Chromosome<City> bestChromosome = null;
-
-            foreach (Chromosome<City> chromosome in chromosomes)
-            {
-                chromosome.Fitness = GetFitness(chromosome);
-
-                if (bestChromosome == null || chromosome.Fitness > bestChromosome.Fitness)
-                {
-                    bestChromosome = chromosome;
-                }
-            }
-
-            return bestChromosome;
         }
 
         /// <summary>
