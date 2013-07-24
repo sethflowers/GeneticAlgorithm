@@ -6,6 +6,7 @@
 namespace GeneticAlgorithm
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
 
     /// <summary>
@@ -70,12 +71,14 @@ namespace GeneticAlgorithm
         /// </summary>
         /// <param name="currentPopulation">The current population of chromosomes that make up the possible solutions to the problem
         /// being solved by this genetic algorithm.</param>
+        /// <param name="numberOfBestChromosomesToPromote">The number of best chromosomes each generation to automatically promote to the next generation.</param>
         /// <returns>
         /// Returns a new population of chromosomes.
         /// </returns>
         /// <exception cref="System.ArgumentNullException">currentPopulation;Unable to create a new population from a null population.</exception>
         public virtual ChromosomeCollection<T> Evolve(
-            ChromosomeCollection<T> currentPopulation)
+            ChromosomeCollection<T> currentPopulation,
+            int numberOfBestChromosomesToPromote)
         {
             if (currentPopulation == null)
             {
@@ -87,6 +90,12 @@ namespace GeneticAlgorithm
             // Create a new population of chromosomes.
             ChromosomeCollection<T> newPopulation = new ChromosomeCollection<T>();
 
+            // Bring forward the designated number of most fit chromosomes into the next generation.
+            PromoteBestChromosomes(
+                numberOfBestChromosomesToPromote, 
+                currentPopulation, 
+                newPopulation);
+            
             // Get the current populations total fitness.
             double totalFitness = currentPopulation.Sum(c => c.Fitness);
 
@@ -109,6 +118,39 @@ namespace GeneticAlgorithm
             }
 
             return newPopulation;
+        }
+
+        /// <summary>
+        /// <para>Promotes the desired number of most fit chromosomes from the current generation to the next generation.</para>
+        /// <para>Note that if the parameter is negative, then no exception is thrown, but no chromosomes are promoted.</para>
+        /// <para>Likewise, if the parameter is greater than the count in the current generation, we only take the amount in the current generation.</para>
+        /// <para>This would be a pointless value though, since there is no room for evolving.</para>
+        /// <para>Every generation would be identical.</para>
+        /// </summary>
+        /// <param name="numberOfBestChromosomesToPromote">The number of best chromosomes to promote.</param>
+        /// <param name="currentPopulation">The current population.</param>
+        /// <param name="newPopulation">The new population.</param>
+        private static void PromoteBestChromosomes(
+            int numberOfBestChromosomesToPromote, 
+            ChromosomeCollection<T> currentPopulation, 
+            ChromosomeCollection<T> newPopulation)
+        {
+            int numberToTake = Math.Min(
+                Math.Max(0, numberOfBestChromosomesToPromote),
+                currentPopulation.Count);
+
+            IEnumerable<Chromosome<T>> chromosomesToTake = 
+                currentPopulation.OrderByDescending(c => c.Fitness).Take(numberToTake);
+
+            foreach (Chromosome<T> chromosome in chromosomesToTake)
+            {
+                // Add a clone of the chromosome to the new populations.
+                newPopulation.Add(
+                    new Chromosome<T>(chromosome.Genes.ToList()) 
+                    { 
+                        Fitness = chromosome.Fitness 
+                    });
+            }
         }
 
         /// <summary>

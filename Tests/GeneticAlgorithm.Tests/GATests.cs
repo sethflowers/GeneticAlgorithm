@@ -28,7 +28,8 @@ namespace GeneticAlgorithm.Tests
             {
                 new GA<int>(new GenericFitnessCalculator<int>(c => 0d)).Run(
                     beginningPopulation: null,
-                    numberOfGenerations: 10);
+                    numberOfGenerations: 10,
+                    numberOfBestChromosomesToPromote: 0);
             }
             catch (ArgumentNullException argumentNullException)
             {
@@ -67,11 +68,11 @@ namespace GeneticAlgorithm.Tests
             ChromosomeCollection<int> generationFive = new ChromosomeCollection<int>();
 
             // Setup the population evolver to return the desired generation when given the previous generation.
-            populationEvolver.Setup(p => p.Evolve(beginningPopulation)).Returns(generationOne);
-            populationEvolver.Setup(p => p.Evolve(generationOne)).Returns(generationTwo);
-            populationEvolver.Setup(p => p.Evolve(generationTwo)).Returns(generationThree);
-            populationEvolver.Setup(p => p.Evolve(generationThree)).Returns(generationFour);
-            populationEvolver.Setup(p => p.Evolve(generationFour)).Returns(generationFive);
+            populationEvolver.Setup(p => p.Evolve(beginningPopulation, 0)).Returns(generationOne);
+            populationEvolver.Setup(p => p.Evolve(generationOne, 0)).Returns(generationTwo);
+            populationEvolver.Setup(p => p.Evolve(generationTwo, 0)).Returns(generationThree);
+            populationEvolver.Setup(p => p.Evolve(generationThree, 0)).Returns(generationFour);
+            populationEvolver.Setup(p => p.Evolve(generationFour, 0)).Returns(generationFive);
 
             // Add chromosomes to each generation.
             beginningPopulation.Add(new Chromosome<int>(new[] { 0 }));
@@ -82,7 +83,7 @@ namespace GeneticAlgorithm.Tests
             generationFive.Add(new Chromosome<int>(new[] { 5 }));
 
             // Execute the code to test.
-            ChromosomeCollection<int> endingPopulation = ga.Run(beginningPopulation, numberOfGenerations: 5);
+            ChromosomeCollection<int> endingPopulation = ga.Run(beginningPopulation, numberOfGenerations: 5, numberOfBestChromosomesToPromote: 0);
 
             // Validate that we got back the expected population.
             Assert.AreEqual(generationFive, endingPopulation);
@@ -114,14 +115,14 @@ namespace GeneticAlgorithm.Tests
             generationTwo.Add(new Chromosome<int>(new[] { 2 }));
 
             // Setup the population evolver to return the desired generation when given the previous generation.
-            populationEvolver.Setup(p => p.Evolve(beginningPopulation)).Returns(generationOne);
-            populationEvolver.Setup(p => p.Evolve(generationOne)).Returns(generationTwo);
+            populationEvolver.Setup(p => p.Evolve(beginningPopulation, 0)).Returns(generationOne);
+            populationEvolver.Setup(p => p.Evolve(generationOne, 0)).Returns(generationTwo);
             
             // Setup the fitness calculator to set the fitness on the chromosomes.
             fitnessCalculator.Setup(f => f.Calculate(It.IsAny<Chromosome<int>>())).Returns(1);
 
             // Execute the code to test.
-            ChromosomeCollection<int> endingPopulation = ga.Run(beginningPopulation, numberOfGenerations: 2);
+            ChromosomeCollection<int> endingPopulation = ga.Run(beginningPopulation, numberOfGenerations: 2, numberOfBestChromosomesToPromote: 0);
 
             // Validate that the fitness was set on each chromosome in each population.
             Assert.IsTrue(beginningPopulation.All(c => c.Fitness == 1), "Beginning Population");
@@ -151,9 +152,9 @@ namespace GeneticAlgorithm.Tests
             ChromosomeCollection<int> generationThree = new ChromosomeCollection<int>();
 
             // Setup the population evolver to return the desired generation when given the previous generation.
-            populationEvolver.Setup(p => p.Evolve(beginningPopulation)).Returns(generationOne);
-            populationEvolver.Setup(p => p.Evolve(generationOne)).Returns(generationTwo);
-            populationEvolver.Setup(p => p.Evolve(generationTwo)).Returns(generationThree);
+            populationEvolver.Setup(p => p.Evolve(beginningPopulation, 0)).Returns(generationOne);
+            populationEvolver.Setup(p => p.Evolve(generationOne, 0)).Returns(generationTwo);
+            populationEvolver.Setup(p => p.Evolve(generationTwo, 0)).Returns(generationThree);
 
             // Add chromosomes to each generation.
             beginningPopulation.Add(new Chromosome<int>(new[] { 0 }));
@@ -167,13 +168,49 @@ namespace GeneticAlgorithm.Tests
             ga.Epoch += (o, e) => generationsEpoched.Add(e.Data);
 
             // Execute the code to test.
-            ga.Run(beginningPopulation, numberOfGenerations: 3);
+            ga.Run(beginningPopulation, numberOfGenerations: 3, numberOfBestChromosomesToPromote: 0);
 
             // Validate that the event was raised for each generation epoched.
             Assert.AreEqual(3, generationsEpoched.Count, "Count");
             Assert.AreEqual(generationOne, generationsEpoched[0], "Generation One");
             Assert.AreEqual(generationTwo, generationsEpoched[1], "Generation Two");
             Assert.AreEqual(generationThree, generationsEpoched[2], "Generation Three");
+        }
+
+        /// <summary>
+        /// Validates that the GA just passes the numberOfBestChromosomesToPromote argument to the PopulationEvolver for each epoch.
+        /// </summary>
+        [TestMethod]
+        public void Run_ProvidesTheCorrectNumberOfChromosomesToTakeForwardToEvolver()
+        {
+            int numberOfChromosomesToTakeForward = 3;
+
+            // Setup the mock dependencies of the GA.
+            Mock<PopulationEvolver<int>> populationEvolver = new Mock<PopulationEvolver<int>>(null);
+            Mock<ChromosomeFitnessCalculator<int>> fitnessCalculator = new Mock<ChromosomeFitnessCalculator<int>>();
+
+            // Setup the GA with the mock dependencies.
+            GA<int> ga = new GA<int>(fitnessCalculator.Object, populationEvolver.Object);
+
+            // Setup the population that will be passed into the GA.
+            ChromosomeCollection<int> beginningPopulation = new ChromosomeCollection<int>();
+
+            // Setup another generation to return.
+            ChromosomeCollection<int> generationOne = new ChromosomeCollection<int>();
+            
+            // Setup the population evolver to return the desired generation when given the previous generation.
+            populationEvolver.Setup(p => p.Evolve(beginningPopulation, numberOfChromosomesToTakeForward)).Returns(generationOne);
+            
+            // Add chromosomes to each generation.
+            beginningPopulation.Add(new Chromosome<int>(new[] { 0, 1, 4, 2, 3 }));
+            generationOne.Add(new Chromosome<int>(new[] { 1, 1, 4, 3, 7 }));
+            
+            // Execute the code to test.
+            ChromosomeCollection<int> endingPopulation = ga.Run(
+                beginningPopulation, numberOfGenerations: 1, numberOfBestChromosomesToPromote: numberOfChromosomesToTakeForward);
+
+            // Validate that we got back the expected population.
+            Assert.AreEqual(generationOne, endingPopulation);
         }
     }
 }

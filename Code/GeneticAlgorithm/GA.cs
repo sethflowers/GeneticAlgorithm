@@ -54,13 +54,15 @@ namespace GeneticAlgorithm
         /// <param name="beginningPopulation">The beginning population of chromosomes that make up the possible solutions to the problem
         /// being solved by this genetic algorithm.</param>
         /// <param name="numberOfGenerations">The number of generations to evolve the beginning population.</param>
+        /// <param name="numberOfBestChromosomesToPromote">The number of best chromosomes each generation to automatically promote to the next generation.</param>
         /// <returns>
         /// Returns a new population of chromosomes.
         /// </returns>
         /// <exception cref="System.ArgumentNullException">beginningPopulation;Unable to run a genetic algorithm with a null beginning population of chromosomes.</exception>
         public ChromosomeCollection<T> Run(
             ChromosomeCollection<T> beginningPopulation,
-            int numberOfGenerations)
+            int numberOfGenerations,
+            int numberOfBestChromosomesToPromote)
         {
             if (beginningPopulation == null)
             {
@@ -76,7 +78,8 @@ namespace GeneticAlgorithm
             
             while (numberOfGenerations-- > 0)
             {
-                currentPopulation = this.populationEvolver.Evolve(currentPopulation);
+                currentPopulation = this.populationEvolver.Evolve(
+                    currentPopulation, numberOfBestChromosomesToPromote);
 
                 // Set the fitness for each chromosome in the population.
                 this.UpdateFitnessOnPopulation(currentPopulation);

@@ -26,7 +26,7 @@ namespace GeneticAlgorithm.Tests
         {
             try
             {
-                new PopulationEvolver<int>().Evolve(currentPopulation: null);
+                new PopulationEvolver<int>().Evolve(currentPopulation: null, numberOfBestChromosomesToPromote: 0);
             }
             catch (ArgumentNullException argumentNullException)
             {
@@ -132,7 +132,8 @@ namespace GeneticAlgorithm.Tests
             validator.Setup(v => v.IsValid(It.IsAny<Chromosome<int>>())).Returns(true);
 
             // Execute the code to test.
-            ChromosomeCollection<int> newPopulation = populationEvolver.Evolve(currentPopulation);
+            ChromosomeCollection<int> newPopulation = populationEvolver.Evolve(
+                currentPopulation, numberOfBestChromosomesToPromote: 0);
 
             // Validate that we got back the expected new chromosomes.
             Assert.AreEqual(3, newPopulation.Count, "The new population should have the same number of chromosomes as the current population.");
@@ -173,6 +174,91 @@ namespace GeneticAlgorithm.Tests
             // 324
             // 651
             // 684
+        }
+
+        /// <summary>
+        /// Validates that evolve automatically promotes the correct number of most fit chromosomes
+        /// depending on the numberOfBestChromosomesToPromote argument.
+        /// </summary>
+        [TestMethod]
+        public void Evolve_TakesForwardCorrectNumberOfBestChromosomes()
+        {
+            // Create four chromosomes, with different genes, and different fitnesses.
+            Chromosome<int> chromosomeA = new Chromosome<int>(new[] { 1, 2, 3 }) { Fitness = 2 };
+            Chromosome<int> chromosomeB = new Chromosome<int>(new[] { 4, 5, 6 }) { Fitness = 3 };
+            Chromosome<int> chromosomeC = new Chromosome<int>(new[] { 7, 8, 9 }) { Fitness = 1 };
+            Chromosome<int> chromosomeD = new Chromosome<int>(new[] { 10, 11, 12 }) { Fitness = 0.5 };
+
+            // Create a current population with the chromosomes.
+            ChromosomeCollection<int> currentPopulation =
+                new ChromosomeCollection<int> { chromosomeA, chromosomeB, chromosomeC, chromosomeD };
+
+            // Create the mock dependencies of the population evolver.
+            Mock<ChromosomeSelector<int>> selector = new Mock<ChromosomeSelector<int>>();
+            Mock<ChromosomeModifier<int>> modifier = new Mock<ChromosomeModifier<int>>();
+            Mock<ChromosomeValidator<int>> validator = new Mock<ChromosomeValidator<int>>();
+
+            // Create the population evolver object we will be testing, but with the mock dependencies.
+            PopulationEvolver<int> populationEvolver = new PopulationEvolver<int>(
+                selector.Object,
+                modifier.Object,
+                validator.Object);
+
+            // We know we only have to go through one and a half iterations to make 3 new chromosomes, 
+            // since we make two each iteration, assuming they are valid.
+            // However, we are bringing forward the best two chromosomes automatically for this test.
+            // This means we only need to go through one iteration.
+            // This means we only need to setup the selector queue to return one pair of two.
+            // Setup the selector queue to return unique pairs of the chromosomes for the mom and dad for one iteration.
+            Queue<Chromosome<int>> selectorQueue = new Queue<Chromosome<int>>(new[] 
+            {
+                chromosomeA, chromosomeC 
+            });
+
+            // Setup the selector to return the chromosomes in the order we defined for the queue.
+            selector
+                .Setup(s => s.Choose(currentPopulation, It.IsAny<double>()))
+                .Returns(selectorQueue.Dequeue);
+
+            // When crossover is called, we will just swap the genes at the first index.
+            // This should happen for chromosome A and C.
+            // This is akin to if we did a two point crossover where the indexes were one apart.
+            modifier
+                .Setup(m => m.Crossover(It.IsAny<Chromosome<int>>(), It.IsAny<Chromosome<int>>()))
+                .Callback<Chromosome<int>, Chromosome<int>>((dad, mom) =>
+                {
+                    int temp = dad.Genes[0];
+                    dad.Genes[0] = mom.Genes[0];
+                    mom.Genes[0] = temp;
+                });
+
+            // We call mutate twice each iteration.
+            // This means that with the way we setup the selector,
+            // we will be calling it once for chromosome A and once for C.
+            // We can just specify that mutate will always swap the genes at index 0 and 2.
+            modifier
+                .Setup(m => m.Mutate(It.IsAny<Chromosome<int>>()))
+                .Callback<Chromosome<int>>(chromosome =>
+                {
+                    int temp = chromosome.Genes[0];
+                    chromosome.Genes[0] = chromosome.Genes[2];
+                    chromosome.Genes[2] = temp;
+                });
+
+            // Lastly, setup the validator to always just return true.
+            validator.Setup(v => v.IsValid(It.IsAny<Chromosome<int>>())).Returns(true);
+
+            // Execute the code to test, bringing forward 2 most fit chromosomes.
+            ChromosomeCollection<int> newPopulation = populationEvolver.Evolve(
+                currentPopulation, numberOfBestChromosomesToPromote: 2);
+
+            // The first chromosome should have the same genes and fitness as the most fit chromosome in the beginning population.
+            CollectionAssert.AreEqual(new[] { 4, 5, 6 }, newPopulation[0].Genes.ToList(), "Best Genes");
+            Assert.AreEqual(3, newPopulation[0].Fitness, "Best Fitness");
+
+            // The second chromosome should have the same genes and fitness as the second most fit chromosome in the beginning population.
+            CollectionAssert.AreEqual(new[] { 1, 2, 3 }, newPopulation[1].Genes.ToList(), "Second Best Genes");
+            Assert.AreEqual(2, newPopulation[1].Fitness, "Second Best Fitness");
         }
     }
 }

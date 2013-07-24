@@ -40,7 +40,10 @@ namespace TravelingSalesmanGA
                 populationEvolver);
 
             ChromosomeCollection<City> endingPopulation =
-                geneticAlgorithm.Run(beginningPopulation, numberOfGenerations: 1000);
+                geneticAlgorithm.Run(
+                    beginningPopulation, 
+                    numberOfGenerations: 1000, 
+                    numberOfBestChromosomesToPromote: 0);
 
             Chromosome<City> bestChromosome = endingPopulation
                 .OrderByDescending(c => c.Fitness).First();
