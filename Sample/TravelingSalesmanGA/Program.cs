@@ -28,7 +28,16 @@ namespace TravelingSalesmanGA
             ChromosomeCollection<City> beginningPopulation =
                 GetBeginningPopulation(numberOfCities: 20, populationSize: 400);
 
-            GA<City> geneticAlgorithm = new GA<City>(chromosomeFitnessCalculator);
+            Random random = new Random();
+
+            PopulationEvolver<City> populationEvolver = new PopulationEvolver<City>(
+                new RouletteSelector<City>(random),
+                new ChromosomeModifier<City>(random), 
+                new DistinctGeneValidator<City>());
+
+            GA<City> geneticAlgorithm = new GA<City>(
+                chromosomeFitnessCalculator,
+                populationEvolver);
 
             ChromosomeCollection<City> endingPopulation =
                 geneticAlgorithm.Run(beginningPopulation, numberOfGenerations: 1000);

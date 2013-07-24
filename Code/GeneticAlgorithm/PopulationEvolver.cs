@@ -45,7 +45,7 @@ namespace GeneticAlgorithm
             : this(
                 new RouletteSelector<T>(randomGenerator),
                 new ChromosomeModifier<T>(randomGenerator),
-                new DistinctGeneValidator<T>())
+                new GenericChromosomeValidator<T>(c => true))
         {
         }
 

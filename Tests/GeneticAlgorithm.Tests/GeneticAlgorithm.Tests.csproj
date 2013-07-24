@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="ChromosomeModifierTests.cs" />
     <Compile Include="ChromosomeTests.cs" />
+    <Compile Include="GenericChromosomeValidatorTests.cs" />
     <Compile Include="PopulationEvolverTests.cs" />
     <Compile Include="GATests.cs" />
     <Compile Include="DistinctGeneValidatorTests.cs" />
