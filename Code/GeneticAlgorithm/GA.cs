@@ -14,6 +14,11 @@ namespace GeneticAlgorithm
     public class GA<T>
     {
         /// <summary>
+        /// Provides a mechanism to determine a fitness for a chromosome.
+        /// </summary>
+        private readonly ChromosomeFitnessCalculator<T> fitnessCalculator;
+
+        /// <summary>
         /// Provides a mechanism to evolve a population of chromosomes into a new population.
         /// </summary>
         private readonly PopulationEvolver<T> populationEvolver;
@@ -23,16 +28,18 @@ namespace GeneticAlgorithm
         /// </summary>
         /// <param name="fitnessCalculator">Provides a mechanism to determine a fitness for a chromosome.</param>
         public GA(ChromosomeFitnessCalculator<T> fitnessCalculator) : 
-            this(new PopulationEvolver<T>(fitnessCalculator))
+            this(fitnessCalculator, new PopulationEvolver<T>())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GA{T}" /> class.
         /// </summary>
+        /// <param name="fitnessCalculator">Provides a mechanism to determine a fitness for a chromosome.</param>
         /// <param name="populationEvolver">Provides a mechanism to evolve a population of chromosomes into a new population.</param>
-        public GA(PopulationEvolver<T> populationEvolver)
+        public GA(ChromosomeFitnessCalculator<T> fitnessCalculator, PopulationEvolver<T> populationEvolver)
         {
+            this.fitnessCalculator = fitnessCalculator;
             this.populationEvolver = populationEvolver;
         }
 
@@ -59,12 +66,30 @@ namespace GeneticAlgorithm
 
             ChromosomeCollection<T> currentPopulation = beginningPopulation;
 
+            // Set the fitness for each chromosome in the population.
+            this.UpdateFitnessOnPopulation(currentPopulation);
+            
             while (numberOfGenerations-- > 0)
             {
                 currentPopulation = this.populationEvolver.Evolve(currentPopulation);
+
+                // Set the fitness for each chromosome in the population.
+                this.UpdateFitnessOnPopulation(currentPopulation);
             }
 
             return currentPopulation;
+        }
+
+        /// <summary>
+        /// Updates the fitness on each chromosome in the population.
+        /// </summary>
+        /// <param name="population">The population.</param>
+        private void UpdateFitnessOnPopulation(ChromosomeCollection<T> population)
+        {
+            foreach (Chromosome<T> chromosome in population)
+            {
+                chromosome.Fitness = this.fitnessCalculator.Calculate(chromosome);
+            }
         }
     }
 }

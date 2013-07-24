@@ -7,6 +7,7 @@ namespace GeneticAlgorithm.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Moq;
 
@@ -48,11 +49,12 @@ namespace GeneticAlgorithm.Tests
         [TestMethod]
         public void Run_RunsCorrectNumberOfGenerations()
         {
-            // Setup the mock population evolver, which is a dependency of the GA.
+            // Setup the mock dependencies of the GA.
             Mock<PopulationEvolver<int>> populationEvolver = new Mock<PopulationEvolver<int>>(null);
+            Mock<ChromosomeFitnessCalculator<int>> fitnessCalculator = new Mock<ChromosomeFitnessCalculator<int>>();
 
-            // Setup the GA with the mock dependency.
-            GA<int> ga = new GA<int>(populationEvolver.Object);
+            // Setup the GA with the mock dependencies.
+            GA<int> ga = new GA<int>(fitnessCalculator.Object, populationEvolver.Object);
 
             // Setup the population that will be passed into the GA.
             ChromosomeCollection<int> beginningPopulation = new ChromosomeCollection<int>();
@@ -76,6 +78,47 @@ namespace GeneticAlgorithm.Tests
 
             // Validate that we got back the expected population.
             Assert.AreEqual(generationFive, endingPopulation);
+        }
+
+        /// <summary>
+        /// Validates that the Run method updates the fitness on each chromosome in each population.
+        /// </summary>
+        [TestMethod]
+        public void Run_UpdatesTheFitnessOnEachPopulation()
+        {
+            // Setup the mock dependencies of the GA.
+            Mock<PopulationEvolver<int>> populationEvolver = new Mock<PopulationEvolver<int>>(null);
+            Mock<ChromosomeFitnessCalculator<int>> fitnessCalculator = new Mock<ChromosomeFitnessCalculator<int>>();
+
+            // Setup the GA with the mock dependencies.
+            GA<int> ga = new GA<int>(fitnessCalculator.Object, populationEvolver.Object);
+
+            // Setup the population that will be passed into the GA.
+            ChromosomeCollection<int> beginningPopulation = new ChromosomeCollection<int>();
+
+            // Setup other generations.
+            ChromosomeCollection<int> generationOne = new ChromosomeCollection<int>();
+            ChromosomeCollection<int> generationTwo = new ChromosomeCollection<int>();
+
+            // Add chromosomes to each generation.
+            beginningPopulation.Add(new Chromosome<int>(new[] { 1 }));
+            generationOne.Add(new Chromosome<int>(new[] { 2 }));
+            generationTwo.Add(new Chromosome<int>(new[] { 3 }));
+            
+            // Setup the population evolver to return the desired generation when given the previous generation.
+            populationEvolver.Setup(p => p.Evolve(beginningPopulation)).Returns(generationOne);
+            populationEvolver.Setup(p => p.Evolve(generationOne)).Returns(generationTwo);
+            
+            // Setup the fitness calculator to set the fitness on the chromosomes.
+            fitnessCalculator.Setup(f => f.Calculate(It.IsAny<Chromosome<int>>())).Returns(1);
+
+            // Execute the code to test.
+            ChromosomeCollection<int> endingPopulation = ga.Run(beginningPopulation, numberOfGenerations: 2);
+
+            // Validate that the fitness was set on each chromosome in each population.
+            Assert.IsTrue(beginningPopulation.All(c => c.Fitness == 1), "Beginning Population");
+            Assert.IsTrue(generationOne.All(c => c.Fitness == 1), "Generation one Population");
+            Assert.IsTrue(generationTwo.All(c => c.Fitness == 1), "Generation two (ending) Population");
         }
     }
 }

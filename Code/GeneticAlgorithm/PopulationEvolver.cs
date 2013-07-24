@@ -15,11 +15,6 @@ namespace GeneticAlgorithm
     public class PopulationEvolver<T>
     {
         /// <summary>
-        /// Provides a mechanism to determine a fitness for a chromosome.
-        /// </summary>
-        private readonly ChromosomeFitnessCalculator<T> fitnessCalculator;
-
-        /// <summary>
         /// Provides a mechanism to select a chromosome from a population of chromosomes based on some fitness criteria.
         /// </summary>
         private readonly ChromosomeSelector<T> selector;
@@ -37,20 +32,17 @@ namespace GeneticAlgorithm
         /// <summary>
         /// Initializes a new instance of the <see cref="PopulationEvolver{T}" /> class.
         /// </summary>
-        /// <param name="fitnessCalculator">Provides a mechanism to determine a fitness for a chromosome.</param>
-        public PopulationEvolver(ChromosomeFitnessCalculator<T> fitnessCalculator)
-            : this(fitnessCalculator, new Random())
+        public PopulationEvolver()
+            : this(new Random())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PopulationEvolver{T}" /> class.
         /// </summary>
-        /// <param name="fitnessCalculator">Provides a mechanism to determine a fitness for a chromosome.</param>
         /// <param name="randomGenerator">Represents a pseudo-random number generator, a device that produces a sequence of numbers that meet certain statistical requirements for randomness.</param>
-        public PopulationEvolver(ChromosomeFitnessCalculator<T> fitnessCalculator, Random randomGenerator)
+        public PopulationEvolver(Random randomGenerator)
             : this(
-                fitnessCalculator,
                 new RouletteSelector<T>(randomGenerator),
                 new ChromosomeModifier<T>(randomGenerator),
                 new DistinctGeneValidator<T>())
@@ -60,17 +52,14 @@ namespace GeneticAlgorithm
         /// <summary>
         /// Initializes a new instance of the <see cref="PopulationEvolver{T}" /> class.
         /// </summary>
-        /// <param name="fitnessCalculator">Provides a mechanism to determine a fitness for a chromosome.</param>
         /// <param name="selector">Provides a mechanism to select a chromosome from a population of chromosomes based on some fitness criteria.</param>
         /// <param name="modifier">Provides a mechanism to alter chromosomes in a biologically inspired manner.</param>
         /// <param name="validator">Provides a mechanism to determine if the solution represented by a given chromosome is valid.</param>
         public PopulationEvolver(
-            ChromosomeFitnessCalculator<T> fitnessCalculator,
             ChromosomeSelector<T> selector,
             ChromosomeModifier<T> modifier,
             ChromosomeValidator<T> validator)
         {
-            this.fitnessCalculator = fitnessCalculator;
             this.selector = selector;
             this.modifier = modifier;
             this.validator = validator;
@@ -79,12 +68,12 @@ namespace GeneticAlgorithm
         /// <summary>
         /// Creates a new population from the chromosomes.
         /// </summary>
-        /// <param name="currentPopulation">
-        /// The current population of chromosomes that make up the possible solutions to the problem
+        /// <param name="currentPopulation">The current population of chromosomes that make up the possible solutions to the problem
         /// being solved by this genetic algorithm.</param>
         /// <returns>
         /// Returns a new population of chromosomes.
         /// </returns>
+        /// <exception cref="System.ArgumentNullException">currentPopulation;Unable to create a new population from a null population.</exception>
         public virtual ChromosomeCollection<T> Evolve(
             ChromosomeCollection<T> currentPopulation)
         {
@@ -93,12 +82,6 @@ namespace GeneticAlgorithm
                 throw new ArgumentNullException(
                     "currentPopulation",
                     "Unable to create a new population from a null population.");
-            }
-
-            // Update the fitness on all the current chromosomes.
-            foreach (Chromosome<T> chromosome in currentPopulation)
-            {
-                chromosome.Fitness = this.fitnessCalculator.Calculate(chromosome);
             }
 
             // Create a new population of chromosomes.

@@ -26,8 +26,7 @@ namespace GeneticAlgorithm.Tests
         {
             try
             {
-                new PopulationEvolver<int>(new GenericFitnessCalculator<int>(c => 0d)).Evolve(
-                    currentPopulation: null);
+                new PopulationEvolver<int>().Evolve(currentPopulation: null);
             }
             catch (ArgumentNullException argumentNullException)
             {
@@ -38,7 +37,7 @@ namespace GeneticAlgorithm.Tests
                 throw;
             }
         }
-
+        
         /// <summary>
         /// Validates that the Evolve method behaves as expected given some simple input.
         /// This method is difficult to test, since it mainly just calls dependencies.
@@ -57,14 +56,12 @@ namespace GeneticAlgorithm.Tests
                 new ChromosomeCollection<int> { chromosomeA, chromosomeB, chromosomeC };
 
             // Create the mock dependencies of the population evolver.
-            Mock<ChromosomeFitnessCalculator<int>> fitnessCalculator = new Mock<ChromosomeFitnessCalculator<int>>();
             Mock<ChromosomeSelector<int>> selector = new Mock<ChromosomeSelector<int>>();
             Mock<ChromosomeModifier<int>> modifier = new Mock<ChromosomeModifier<int>>();
             Mock<ChromosomeValidator<int>> validator = new Mock<ChromosomeValidator<int>>();
 
             // Create the population evolver object we will be testing, but with the mock dependencies.
             PopulationEvolver<int> populationEvolver = new PopulationEvolver<int>(
-                fitnessCalculator.Object,
                 selector.Object,
                 modifier.Object,
                 validator.Object);
