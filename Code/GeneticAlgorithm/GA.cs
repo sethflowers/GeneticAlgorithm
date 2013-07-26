@@ -112,7 +112,10 @@ namespace GeneticAlgorithm
         {
             foreach (Chromosome<T> chromosome in population)
             {
-                chromosome.Fitness = this.fitnessCalculator.Calculate(chromosome);
+                if (chromosome.Fitness == default(double))
+                {
+                    chromosome.Fitness = this.fitnessCalculator.Calculate(chromosome);
+                }
             }
         }
     }
