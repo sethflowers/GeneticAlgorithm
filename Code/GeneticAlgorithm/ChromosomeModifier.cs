@@ -6,6 +6,8 @@
 namespace GeneticAlgorithm
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
     /// Provides a mechanism to alter chromosomes in a biologically inspired manner.
@@ -32,6 +34,11 @@ namespace GeneticAlgorithm
         private readonly Random randomGenerator;
 
         /// <summary>
+        /// The number of crossover points to use during the crossover mechanism.
+        /// </summary>
+        private readonly int numberOfCrossoverPoints;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ChromosomeModifier{T}"/> class.
         /// </summary>
         public ChromosomeModifier()
@@ -44,21 +51,27 @@ namespace GeneticAlgorithm
         /// </summary>
         /// <param name="randomGenerator">Represents a pseudo-random number generator, a device that produces a sequence of numbers that meet certain statistical requirements for randomness.</param>
         public ChromosomeModifier(Random randomGenerator)
-            : this(randomGenerator, 0.07d, 0.02d)
+            : this(randomGenerator, 0.07d, 0.02d, 2)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ChromosomeModifier{T}"/> class.
+        /// Initializes a new instance of the <see cref="ChromosomeModifier{T}" /> class.
         /// </summary>
         /// <param name="randomGenerator">Represents a pseudo-random number generator, a device that produces a sequence of numbers that meet certain statistical requirements for randomness.</param>
         /// <param name="mutationRate">The rate at which a mutation should occur to a single chromosome. This should be a number between 0 and 1, and represents a percent.</param>
         /// <param name="crossoverRate">The rate at which a crossover should occur between genes in two chromosomes. This should be a number between 0 and 1, and represents a percent.</param>
-        public ChromosomeModifier(Random randomGenerator, double mutationRate, double crossoverRate)
+        /// <param name="numberOfCrossoverPoints">The number of crossover points to use during the crossover mechanism.</param>
+        public ChromosomeModifier(
+            Random randomGenerator, 
+            double mutationRate, 
+            double crossoverRate, 
+            int numberOfCrossoverPoints)
         {
             this.randomGenerator = randomGenerator;
             this.mutationRate = mutationRate;
             this.crossoverRate = crossoverRate;
+            this.numberOfCrossoverPoints = numberOfCrossoverPoints;
         }
 
         /// <summary>
@@ -115,11 +128,25 @@ namespace GeneticAlgorithm
 
             if (this.randomGenerator.NextDouble() < this.crossoverRate)
             {
-                int crossoverPoint = this.randomGenerator.Next(dad.Genes.Count);
+                IList<int> crossoverPoints = new List<int>();
 
-                for (int i = crossoverPoint; i < dad.Genes.Count; i++)
+                for (int i = 0; i < this.numberOfCrossoverPoints; i++)
                 {
-                    SwapGenes(dad, i, mom, i);
+                    crossoverPoints.Add(this.randomGenerator.Next(dad.Genes.Count));
+                }
+
+                if (crossoverPoints.Any())
+                {
+                    for (int i = 0; i < crossoverPoints.Count; i += 2)
+                    {
+                        int currentCrossoverPoint = crossoverPoints[i];
+                        int stop = i < crossoverPoints.Count - 1 ? crossoverPoints[i + 1] : dad.Genes.Count;
+
+                        for (int j = currentCrossoverPoint; j < stop; j++)
+                        {
+                            SwapGenes(dad, j, mom, j);
+                        }
+                    }
                 }
             }
         }

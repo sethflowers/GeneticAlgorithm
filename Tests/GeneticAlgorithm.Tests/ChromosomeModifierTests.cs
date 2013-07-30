@@ -110,7 +110,11 @@ namespace GeneticAlgorithm.Tests
             Mock<Random> random = new Mock<Random>();
             random.Setup(r => r.NextDouble()).Returns(() => queue.Dequeue());
 
-            ChromosomeModifier<int> modifier = new ChromosomeModifier<int>(random.Object, mutationRate, crossoverRate: 0);
+            ChromosomeModifier<int> modifier = new ChromosomeModifier<int>(
+                random.Object, 
+                mutationRate, 
+                crossoverRate: 0,
+                numberOfCrossoverPoints: 1);
 
             // Execute the mutate method that we are testing.
             modifier.Mutate(chromosome);
@@ -273,7 +277,8 @@ namespace GeneticAlgorithm.Tests
             ChromosomeModifier<int> modifier = new ChromosomeModifier<int>(
                 randomGenerator: random.Object,
                 mutationRate: 0.5,
-                crossoverRate: crossoverRate);
+                crossoverRate: crossoverRate,
+                numberOfCrossoverPoints: 1);
 
             // Setup some chromosomes so we can validate they didn't get modified.
             IList<int> dadsGenes = new[] { 1, 2, 3, 4, 5 };
@@ -301,9 +306,10 @@ namespace GeneticAlgorithm.Tests
         /// <summary>
         /// Validates that if the double returned from the random generator 
         /// is less than the crossover rate, then the genes are swapped correctly.
+        /// This tests a one point crossover.
         /// </summary>
         [TestMethod]
-        public void Crossover_CrossoverRateMet_SwapsGenesCorrectly()
+        public void Crossover_CrossoverRateMet_SwapsGenesCorrectlyInOnePointCrossover()
         {
             double crossoverRate = 0.1;
 
@@ -311,7 +317,8 @@ namespace GeneticAlgorithm.Tests
             ChromosomeModifier<int> modifier = new ChromosomeModifier<int>(
                 randomGenerator: random.Object,
                 mutationRate: 0.5,
-                crossoverRate: crossoverRate);
+                crossoverRate: crossoverRate,
+                numberOfCrossoverPoints: 1);
 
             // Make sure we clone the lists when we pass them into the chromosome.
             // This is because we need to compare the original lists against the chromosomes genes.
@@ -330,6 +337,96 @@ namespace GeneticAlgorithm.Tests
             // Setup the expected genes after swapping at a crossover index of 2.
             IList<int> expectedDadsGenes = new[] { 1, 2, 8, 9, 10 };
             IList<int> expectedMomsGenes = new[] { 6, 7, 3, 4, 5 };
+
+            // Execute the code to test.
+            modifier.Crossover(dad, mom);
+
+            // Validate that the genes got swapped correctly.
+            CollectionAssert.AreEqual(expectedDadsGenes.ToList(), dad.Genes.ToList());
+            CollectionAssert.AreEqual(expectedMomsGenes.ToList(), mom.Genes.ToList());
+        }
+
+        /// <summary>
+        /// Validates that if the double returned from the random generator 
+        /// is less than the crossover rate, then the genes are swapped correctly.
+        /// This tests a two point crossover.
+        /// </summary>
+        [TestMethod]
+        public void Crossover_CrossoverRateMet_SwapsGenesCorrectlyInTwoPointCrossover()
+        {
+            double crossoverRate = 0.1;
+
+            Mock<Random> random = new Mock<Random> { CallBase = true };
+            ChromosomeModifier<int> modifier = new ChromosomeModifier<int>(
+                randomGenerator: random.Object,
+                mutationRate: 0.5,
+                crossoverRate: crossoverRate,
+                numberOfCrossoverPoints: 2);
+
+            // Make sure we clone the lists when we pass them into the chromosome.
+            // This is because we need to compare the original lists against the chromosomes genes.
+            // In other words, the list is a reference type, so we can't refer to the same list for this test.
+            Chromosome<int> dad = new Chromosome<int>(new[] { 1, 2, 3, 4, 5, 6, 7 });
+            Chromosome<int> mom = new Chromosome<int>(new[] { 8, 9, 10, 11, 12, 13, 14 });
+
+            // Setup the random generator to return something less 
+            // than crossover rate for the NextDouble method.
+            // This ensures that we fall into the swap logic.
+            random.Setup(r => r.NextDouble()).Returns(crossoverRate - 0.01);
+
+            Queue<int> pointsToReturn = new Queue<int>(new[] { 2, 4 });
+
+            // Setup the random generator to specify the point at which we should swap.
+            random.Setup(r => r.Next(dad.Genes.Count)).Returns(pointsToReturn.Dequeue);
+
+            // Setup the expected genes after swapping at crossover indexes of 2, and 4.
+            IList<int> expectedDadsGenes = new[] { 1, 2, 10, 11, 5, 6, 7 };
+            IList<int> expectedMomsGenes = new[] { 8, 9, 3, 4, 12, 13, 14 };
+
+            // Execute the code to test.
+            modifier.Crossover(dad, mom);
+
+            // Validate that the genes got swapped correctly.
+            CollectionAssert.AreEqual(expectedDadsGenes.ToList(), dad.Genes.ToList());
+            CollectionAssert.AreEqual(expectedMomsGenes.ToList(), mom.Genes.ToList());
+        }
+
+        /// <summary>
+        /// Validates that if the double returned from the random generator 
+        /// is less than the crossover rate, then the genes are swapped correctly.
+        /// This tests a three point crossover.
+        /// </summary>
+        [TestMethod]
+        public void Crossover_CrossoverRateMet_SwapsGenesCorrectlyInThreePointCrossover()
+        {
+            double crossoverRate = 0.1;
+
+            Mock<Random> random = new Mock<Random> { CallBase = true };
+            ChromosomeModifier<int> modifier = new ChromosomeModifier<int>(
+                randomGenerator: random.Object,
+                mutationRate: 0.5,
+                crossoverRate: crossoverRate,
+                numberOfCrossoverPoints: 3);
+
+            // Make sure we clone the lists when we pass them into the chromosome.
+            // This is because we need to compare the original lists against the chromosomes genes.
+            // In other words, the list is a reference type, so we can't refer to the same list for this test.
+            Chromosome<int> dad = new Chromosome<int>(new[] { 1, 2, 3, 4, 5, 6, 7 });
+            Chromosome<int> mom = new Chromosome<int>(new[] { 8, 9, 10, 11, 12, 13, 14 });
+
+            // Setup the random generator to return something less 
+            // than crossover rate for the NextDouble method.
+            // This ensures that we fall into the swap logic.
+            random.Setup(r => r.NextDouble()).Returns(crossoverRate - 0.01);
+
+            Queue<int> pointsToReturn = new Queue<int>(new[] { 2, 4, 6 });
+
+            // Setup the random generator to specify the point at which we should swap.
+            random.Setup(r => r.Next(dad.Genes.Count)).Returns(pointsToReturn.Dequeue);
+
+            // Setup the expected genes after swapping at crossover indexes of 2, 4 and 6.
+            IList<int> expectedDadsGenes = new[] { 1, 2, 10, 11, 5, 6, 14 };
+            IList<int> expectedMomsGenes = new[] { 8, 9, 3, 4, 12, 13, 7 };
 
             // Execute the code to test.
             modifier.Crossover(dad, mom);
