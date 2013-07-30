@@ -435,5 +435,51 @@ namespace GeneticAlgorithm.Tests
             CollectionAssert.AreEqual(expectedDadsGenes.ToList(), dad.Genes.ToList());
             CollectionAssert.AreEqual(expectedMomsGenes.ToList(), mom.Genes.ToList());
         }
+
+        /// <summary>
+        /// Validates that if the crossover points returned from the random generator are out of order,
+        /// which is very likely, that they are sorted prior to the algorithm crossing over the genes.
+        /// To test this, we just setup the random generator to return points that are descending,
+        /// and then validate the genes are crossed over correctly.
+        /// </summary>
+        [TestMethod]
+        public void Crossover_CrossoverRateMet_SortsCrossoverPointsBeforeCrossingOver()
+        {
+            double crossoverRate = 0.1;
+
+            Mock<Random> random = new Mock<Random> { CallBase = true };
+            ChromosomeModifier<int> modifier = new ChromosomeModifier<int>(
+                randomGenerator: random.Object,
+                mutationRate: 0.5,
+                crossoverRate: crossoverRate,
+                numberOfCrossoverPoints: 3);
+
+            // Make sure we clone the lists when we pass them into the chromosome.
+            // This is because we need to compare the original lists against the chromosomes genes.
+            // In other words, the list is a reference type, so we can't refer to the same list for this test.
+            Chromosome<int> dad = new Chromosome<int>(new[] { 1, 2, 3, 4, 5, 6, 7 });
+            Chromosome<int> mom = new Chromosome<int>(new[] { 8, 9, 10, 11, 12, 13, 14 });
+
+            // Setup the random generator to return something less 
+            // than crossover rate for the NextDouble method.
+            // This ensures that we fall into the swap logic.
+            random.Setup(r => r.NextDouble()).Returns(crossoverRate - 0.01);
+
+            Queue<int> pointsToReturn = new Queue<int>(new[] { 6, 4, 2 });
+
+            // Setup the random generator to specify the point at which we should swap.
+            random.Setup(r => r.Next(dad.Genes.Count)).Returns(pointsToReturn.Dequeue);
+
+            // Setup the expected genes after swapping at crossover indexes of 2, 4 and 6.
+            IList<int> expectedDadsGenes = new[] { 1, 2, 10, 11, 5, 6, 14 };
+            IList<int> expectedMomsGenes = new[] { 8, 9, 3, 4, 12, 13, 7 };
+
+            // Execute the code to test.
+            modifier.Crossover(dad, mom);
+
+            // Validate that the genes got swapped correctly.
+            CollectionAssert.AreEqual(expectedDadsGenes.ToList(), dad.Genes.ToList());
+            CollectionAssert.AreEqual(expectedMomsGenes.ToList(), mom.Genes.ToList());
+        }
     }
 }

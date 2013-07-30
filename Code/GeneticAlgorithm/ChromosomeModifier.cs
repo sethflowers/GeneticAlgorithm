@@ -128,7 +128,7 @@ namespace GeneticAlgorithm
 
             if (this.randomGenerator.NextDouble() < this.crossoverRate)
             {
-                IList<int> crossoverPoints = new List<int>();
+                List<int> crossoverPoints = new List<int>();
 
                 for (int i = 0; i < this.numberOfCrossoverPoints; i++)
                 {
@@ -137,6 +137,8 @@ namespace GeneticAlgorithm
 
                 if (crossoverPoints.Any())
                 {
+                    crossoverPoints.Sort();
+
                     for (int i = 0; i < crossoverPoints.Count; i += 2)
                     {
                         int currentCrossoverPoint = crossoverPoints[i];
