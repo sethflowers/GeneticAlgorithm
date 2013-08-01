@@ -10,7 +10,7 @@ namespace GeneticAlgorithm.Tests
     using Moq;
 
     /// <summary>
-    /// Tests for the ChromosomeSelector class.
+    /// Tests for the RouletteSelector class.
     /// </summary>
     [TestClass]
     public class RouletteSelectorTests
