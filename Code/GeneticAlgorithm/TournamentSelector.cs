@@ -69,7 +69,7 @@ namespace GeneticAlgorithm
             }
             else if (this.numberOfPlayers < 2 || this.numberOfPlayers > chromosomes.Count)
             {
-                throw new IndexOutOfRangeException("The number of players in a tournament selection needs to be between 2 and the size of the population.");
+                throw new ArgumentOutOfRangeException("numberOfPlayers", "The number of players in a tournament selection needs to be between 2 and the size of the population.");
             }
 
             HashSet<Chromosome<T>> players = new HashSet<Chromosome<T>>();

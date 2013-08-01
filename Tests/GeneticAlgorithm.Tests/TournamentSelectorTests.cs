@@ -64,7 +64,7 @@ namespace GeneticAlgorithm.Tests
         /// Validates that the Choose method throws a meaningful exception if the number of players is out of bounds.
         /// </summary>
         [TestMethod]
-        [ExpectedException(typeof(IndexOutOfRangeException))]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void Choose_NumberOfPlayersOutOfBounds_ThrowsMeaningfulException()
         {
             try
@@ -75,10 +75,10 @@ namespace GeneticAlgorithm.Tests
                 new TournamentSelector<int>(new Random(), numberOfPlayers: -1)
                     .Choose(chromosomes, totalFitness: 0);
             }
-            catch (IndexOutOfRangeException exception)
+            catch (ArgumentOutOfRangeException exception)
             {
                 Assert.AreEqual(
-                    "The number of players in a tournament selection needs to be between 2 and the size of the population.",
+                    string.Format("The number of players in a tournament selection needs to be between 2 and the size of the population.{0}Parameter name: numberOfPlayers", Environment.NewLine),
                     exception.Message);
 
                 throw;

@@ -22,6 +22,8 @@ namespace TravelingSalesmanGA
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Globalization", "CA1303:Do not pass literals as localized parameters", MessageId = "System.Console.WriteLine(System.String,System.Object,System.Object)", Justification = "This is meant as a demonstration. A resource table would be going overboard. I might fix this later.")]
         public static void Main()
         {
+            Console.WriteLine("Running...");
+
             ChromosomeFitnessCalculator<City> chromosomeFitnessCalculator =
                 new GenericFitnessCalculator<City>(GetFitness);
 
@@ -31,7 +33,7 @@ namespace TravelingSalesmanGA
             Random random = new Random();
 
             PopulationEvolver<City> populationEvolver = new PopulationEvolver<City>(
-                new RouletteSelector<City>(random),
+                new TournamentSelector<City>(random, numberOfPlayers: 40),
                 new ChromosomeModifier<City>(random), 
                 new DistinctGeneValidator<City>());
 
@@ -43,7 +45,7 @@ namespace TravelingSalesmanGA
                 geneticAlgorithm.Run(
                     beginningPopulation, 
                     numberOfGenerations: 1000, 
-                    numberOfBestChromosomesToPromote: 0);
+                    numberOfBestChromosomesToPromote: 30);
 
             Chromosome<City> bestChromosome = endingPopulation
                 .OrderByDescending(c => c.Fitness).First();
