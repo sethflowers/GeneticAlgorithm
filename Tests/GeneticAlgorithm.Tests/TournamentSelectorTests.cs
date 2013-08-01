@@ -78,7 +78,7 @@ namespace GeneticAlgorithm.Tests
             catch (ArgumentOutOfRangeException exception)
             {
                 Assert.AreEqual(
-                    string.Format("The number of players in a tournament selection needs to be between 2 and the size of the population.{0}Parameter name: numberOfPlayers", Environment.NewLine),
+                    string.Format("The number of players in a tournament selection needs to be between 2 and the size of the population.{0}Parameter name: chromosomes", Environment.NewLine),
                     exception.Message);
 
                 throw;
