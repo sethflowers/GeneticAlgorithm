@@ -86,7 +86,7 @@ namespace GeneticAlgorithm.Tests
         }
 
         /// <summary>
-        /// Validates that the mutate function behaves as expected given a simple setup.
+        /// Validates that the mutate function behaves as expected given a simple setup using the adjacent strategy.
         /// The mutate function works by iterating over the genes in a chromosome.
         /// Each iteration it gets a random value from the random generator and if that value is less
         /// than the mutation rate, it mutates the current gene.
@@ -94,7 +94,7 @@ namespace GeneticAlgorithm.Tests
         /// indexes, meaning we can control when we expect the gene to be mutated.
         /// </summary>
         [TestMethod]
-        public void Mutate_SimpleScenario_MutatesSuccessfully()
+        public void Mutate_AdjacentStrategyInSimpleScenario_MutatesSuccessfully()
         {  
             // Setup some data for the test.
             double mutationRate = 0.2d;            
@@ -114,13 +114,106 @@ namespace GeneticAlgorithm.Tests
                 random.Object, 
                 mutationRate, 
                 crossoverRate: 0,
-                numberOfCrossoverPoints: 1);
+                numberOfCrossoverPoints: 1,
+                mutationStrategy: MutationStrategy.Adjacent,
+                mutationFunction: null);
 
             // Execute the mutate method that we are testing.
             modifier.Mutate(chromosome);
 
             // Validate that the chromosome has been mutated as expected.
             List<int> expectedGenes = new List<int> { 9, 2, 1, 3, 4, 6, 7, 5, 8, 0 };
+            CollectionAssert.AreEqual(expectedGenes, chromosome.Genes.ToList());
+        }
+
+        /// <summary>
+        /// Validates that the mutate function behaves as expected given a simple setup using the random strategy.
+        /// The mutate function works by iterating over the genes in a chromosome.
+        /// Each iteration it gets a random value from the random generator and if that value is less
+        /// than the mutation rate, it mutates the current gene.
+        /// To test this, we can just mock the random generator to return an expected value at certain
+        /// indexes, meaning we can control when we expect the gene to be mutated.
+        /// </summary>
+        [TestMethod]
+        public void Mutate_RandomStrategyInSimpleScenario_MutatesSuccessfully()
+        {
+            // Setup some data for the test.
+            double mutationRate = 0.2d;
+            List<int> genes = new List<int> { 0, 1, 2, 3, 4 };
+            Chromosome<int> chromosome = new Chromosome<int>(genes);
+
+            // Setup a queue to control the values returned from the random generator.
+            // The queue should have the same number of items as the genes.
+            // Each value in the queue represents the number returns from random.NextDouble for the gene at the same index.
+            // If the value is less than the mutation rate, like 0.1, then it will be swapped.
+            // If the value is more than the mutation rate, like 0.3, then it will not be swapped.
+            Queue<double> queue = new Queue<double>(new[] { 0.3, 0.1, 0.3, 0.3, 0.3 });
+            Mock<Random> random = new Mock<Random>();
+            random.Setup(r => r.NextDouble()).Returns(() => queue.Dequeue());
+
+            // Setup another queue to specify which index to swap.
+            // We only are going to attempt to swap one gene, which is the gene at index 1,
+            // and we expect it to be swapped with the gene at index 3.
+            Queue<int> indexQueue = new Queue<int>(new[] { 3 });
+            random.Setup(r => r.Next(genes.Count)).Returns(() => indexQueue.Dequeue());
+
+            ChromosomeModifier<int> modifier = new ChromosomeModifier<int>(
+                random.Object,
+                mutationRate,
+                crossoverRate: 0,
+                numberOfCrossoverPoints: 1,
+                mutationStrategy: MutationStrategy.Random,
+                mutationFunction: null);
+
+            // Execute the mutate method that we are testing.
+            modifier.Mutate(chromosome);
+
+            // Validate that the chromosome has been mutated as expected.
+            List<int> expectedGenes = new List<int> { 0, 3, 2, 1, 4 };
+            CollectionAssert.AreEqual(expectedGenes, chromosome.Genes.ToList());
+        }
+
+        /// <summary>
+        /// Validates that the mutate function behaves as expected given a simple setup using the function strategy.
+        /// The mutate function works by iterating over the genes in a chromosome.
+        /// Each iteration it gets a random value from the random generator and if that value is less
+        /// than the mutation rate, it mutates the current gene.
+        /// To test this, we can just mock the random generator to return an expected value at certain
+        /// indexes, meaning we can control when we expect the gene to be mutated.
+        /// </summary>
+        [TestMethod]
+        public void Mutate_FunctionStrategyInSimpleScenario_MutatesSuccessfully()
+        {
+            // Setup some data for the test.
+            double mutationRate = 0.2d;
+            List<int> genes = new List<int> { 0, 1, 2, 3, 4 };
+            Chromosome<int> chromosome = new Chromosome<int>(genes);
+
+            // Setup a queue to control the values returned from the random generator.
+            // The queue should have the same number of items as the genes.
+            // Each value in the queue represents the number returns from random.NextDouble for the gene at the same index.
+            // If the value is less than the mutation rate, like 0.1, then it will be swapped.
+            // If the value is more than the mutation rate, like 0.3, then it will not be swapped.
+            Queue<double> queue = new Queue<double>(new[] { 0.3, 0.1, 0.3, 0.3, 0.3 });
+            Mock<Random> random = new Mock<Random>();
+            random.Setup(r => r.NextDouble()).Returns(() => queue.Dequeue());
+
+            // Create a function to mutate the chromosome at the given gene index.
+            Action<Chromosome<int>, int> mutationFunction = (c, i) => c.Genes[i] = 12;
+
+            ChromosomeModifier<int> modifier = new ChromosomeModifier<int>(
+                random.Object,
+                mutationRate,
+                crossoverRate: 0,
+                numberOfCrossoverPoints: 1,
+                mutationStrategy: MutationStrategy.Function,
+                mutationFunction: mutationFunction);
+
+            // Execute the mutate method that we are testing.
+            modifier.Mutate(chromosome);
+
+            // Validate that the chromosome has been mutated as expected.
+            List<int> expectedGenes = new List<int> { 0, 12, 2, 3, 4 };
             CollectionAssert.AreEqual(expectedGenes, chromosome.Genes.ToList());
         }
 

@@ -39,6 +39,17 @@ namespace GeneticAlgorithm
         private readonly int numberOfCrossoverPoints;
 
         /// <summary>
+        /// The mutation strategy to use during chromosome mutation.
+        /// </summary>
+        private readonly MutationStrategy mutationStrategy;
+
+        /// <summary>
+        /// <para>The mutation function to use during chromosome mutation, taking the chromosome to mutate, and the index of the gene to mutate.</para>
+        /// <para>This is only used if the mutation strategy has a value of "Function".</para>
+        /// </summary>
+        private readonly Action<Chromosome<T>, int> mutationFunction;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ChromosomeModifier{T}"/> class.
         /// </summary>
         public ChromosomeModifier()
@@ -67,16 +78,46 @@ namespace GeneticAlgorithm
             double mutationRate, 
             double crossoverRate, 
             int numberOfCrossoverPoints)
+            : this(
+                randomGenerator: randomGenerator,
+                mutationRate: mutationRate,
+                crossoverRate: crossoverRate,
+                numberOfCrossoverPoints: numberOfCrossoverPoints, 
+                mutationStrategy: MutationStrategy.Random, 
+                mutationFunction: null)
+        {            
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ChromosomeModifier{T}" /> class.
+        /// </summary>
+        /// <param name="randomGenerator">Represents a pseudo-random number generator, a device that produces a sequence of numbers that meet certain statistical requirements for randomness.</param>
+        /// <param name="mutationRate">The rate at which a mutation should occur to a single chromosome. This should be a number between 0 and 1, and represents a percent.</param>
+        /// <param name="crossoverRate">The rate at which a crossover should occur between genes in two chromosomes. This should be a number between 0 and 1, and represents a percent.</param>
+        /// <param name="numberOfCrossoverPoints">The number of crossover points to use during the crossover mechanism.</param>
+        /// <param name="mutationStrategy">The mutation strategy to use during chromosome mutation.</param>
+        /// <param name="mutationFunction">The mutation function to use during chromosome mutation, taking the chromosome to mutate, and the index of the gene to mutate. 
+        /// This is only used if the mutation strategy has a value of "Function".</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Justification = "Code Analysis doesn't make exceptions for Lambda expressions, but should.")]
+        public ChromosomeModifier(
+            Random randomGenerator,
+            double mutationRate,
+            double crossoverRate,
+            int numberOfCrossoverPoints,
+            MutationStrategy mutationStrategy,
+            Action<Chromosome<T>, int> mutationFunction)
         {
             this.randomGenerator = randomGenerator;
             this.mutationRate = mutationRate;
             this.crossoverRate = crossoverRate;
             this.numberOfCrossoverPoints = numberOfCrossoverPoints;
+            this.mutationStrategy = mutationStrategy;
+            this.mutationFunction = mutationFunction;
         }
 
         /// <summary>
         /// Mutates the genes in the given chromosome based on the mutation rate.
-        /// Each gene has a chance to be mutated with it's neighbor.
+        /// Each gene has a chance to be mutated based on the mutation strategy.
         /// </summary>
         /// <param name="chromosome">The chromosome to potentially mutate.</param>
         public virtual void Mutate(Chromosome<T> chromosome)
@@ -92,11 +133,20 @@ namespace GeneticAlgorithm
 
             for (int i = 0; i < chromosome.Genes.Count; i++)
             {
-                int nextIndex = i < chromosome.Genes.Count - 1 ? i + 1 : 0;
-
                 if (this.randomGenerator.NextDouble() < this.mutationRate)
                 {
-                    SwapGenes(chromosome, i, chromosome, nextIndex);
+                    if (this.mutationStrategy == MutationStrategy.Adjacent || this.mutationStrategy == MutationStrategy.Random)
+                    {
+                        int nextIndex = this.mutationStrategy == MutationStrategy.Random ? 
+                            this.randomGenerator.Next(chromosome.Genes.Count) :
+                            i < chromosome.Genes.Count - 1 ? i + 1 : 0;
+
+                        SwapGenes(chromosome, i, chromosome, nextIndex);
+                    }
+                    else if (this.mutationStrategy == MutationStrategy.Function && this.mutationFunction != null)
+                    {
+                        this.mutationFunction(chromosome, i);
+                    }
                 }
             }
         }

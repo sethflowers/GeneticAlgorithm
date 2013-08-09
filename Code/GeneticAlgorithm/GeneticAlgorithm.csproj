@@ -52,6 +52,7 @@
     <Compile Include="ChromosomeModifier.cs" />
     <Compile Include="ChromosomeSelector.cs" />
     <Compile Include="ChromosomeValidator.cs" />
+    <Compile Include="MutationStrategy.cs" />
     <Compile Include="TournamentSelector.cs" />
     <Compile Include="DistinctGeneValidator.cs" />
     <Compile Include="EventArgs.cs" />
