@@ -26,7 +26,7 @@ namespace GeneticAlgorithm.Tests
         {
             try
             {
-                new PopulationEvolver<int>().Evolve(currentPopulation: null, numberOfBestChromosomesToPromote: 0);
+                new PopulationEvolver<int>().Evolve(currentPopulation: null, numberOfElites: 0);
             }
             catch (ArgumentNullException argumentNullException)
             {
@@ -133,7 +133,7 @@ namespace GeneticAlgorithm.Tests
 
             // Execute the code to test.
             ChromosomeCollection<int> newPopulation = populationEvolver.Evolve(
-                currentPopulation, numberOfBestChromosomesToPromote: 0);
+                currentPopulation, numberOfElites: 0);
 
             // Validate that we got back the expected new chromosomes.
             Assert.AreEqual(3, newPopulation.Count, "The new population should have the same number of chromosomes as the current population.");
@@ -250,7 +250,7 @@ namespace GeneticAlgorithm.Tests
 
             // Execute the code to test, bringing forward 2 most fit chromosomes.
             ChromosomeCollection<int> newPopulation = populationEvolver.Evolve(
-                currentPopulation, numberOfBestChromosomesToPromote: 2);
+                currentPopulation, numberOfElites: 2);
 
             // The first chromosome should have the same genes and fitness as the most fit chromosome in the beginning population.
             CollectionAssert.AreEqual(new[] { 4, 5, 6 }, newPopulation[0].Genes.ToList(), "Best Genes");

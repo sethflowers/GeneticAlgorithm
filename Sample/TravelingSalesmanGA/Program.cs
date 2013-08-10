@@ -33,8 +33,8 @@ namespace TravelingSalesmanGA
             Random random = new Random();
 
             PopulationEvolver<City> populationEvolver = new PopulationEvolver<City>(
-                new TournamentSelector<City>(random, numberOfPlayers: 40),
-                new ChromosomeModifier<City>(random), 
+                new TournamentSelector<City>(random, numberOfPlayers: 30),
+                new ChromosomeModifier<City>(random, mutationRate: .015, crossoverRate: .05, numberOfCrossoverPoints: 2), 
                 new DistinctGeneValidator<City>());
 
             GA<City> geneticAlgorithm = new GA<City>(
@@ -45,7 +45,7 @@ namespace TravelingSalesmanGA
                 geneticAlgorithm.Run(
                     beginningPopulation, 
                     numberOfGenerations: 1000, 
-                    numberOfBestChromosomesToPromote: 30);
+                    numberOfElites: 30);
 
             Chromosome<City> bestChromosome = endingPopulation
                 .OrderByDescending(c => c.Fitness).First();

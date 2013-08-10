@@ -29,7 +29,7 @@ namespace GeneticAlgorithm.Tests
                 new GA<int>(new GenericFitnessCalculator<int>(c => 0d)).Run(
                     beginningPopulation: null,
                     numberOfGenerations: 10,
-                    numberOfBestChromosomesToPromote: 0);
+                    numberOfElites: 0);
             }
             catch (ArgumentNullException argumentNullException)
             {
@@ -83,7 +83,7 @@ namespace GeneticAlgorithm.Tests
             generationFive.Add(new Chromosome<int>(new[] { 5 }));
 
             // Execute the code to test.
-            ChromosomeCollection<int> endingPopulation = ga.Run(beginningPopulation, numberOfGenerations: 5, numberOfBestChromosomesToPromote: 0);
+            ChromosomeCollection<int> endingPopulation = ga.Run(beginningPopulation, numberOfGenerations: 5, numberOfElites: 0);
 
             // Validate that we got back the expected population.
             Assert.AreEqual(generationFive, endingPopulation);
@@ -122,7 +122,7 @@ namespace GeneticAlgorithm.Tests
             fitnessCalculator.Setup(f => f.Calculate(It.IsAny<Chromosome<int>>())).Returns(1);
 
             // Execute the code to test.
-            ChromosomeCollection<int> endingPopulation = ga.Run(beginningPopulation, numberOfGenerations: 2, numberOfBestChromosomesToPromote: 0);
+            ChromosomeCollection<int> endingPopulation = ga.Run(beginningPopulation, numberOfGenerations: 2, numberOfElites: 0);
 
             // Validate that the fitness was set on each chromosome in each population.
             Assert.IsTrue(beginningPopulation.All(c => c.Fitness == 1), "Beginning Population");
@@ -168,7 +168,7 @@ namespace GeneticAlgorithm.Tests
             ga.Epoch += (o, e) => generationsEpoched.Add(e.Data);
 
             // Execute the code to test.
-            ga.Run(beginningPopulation, numberOfGenerations: 3, numberOfBestChromosomesToPromote: 0);
+            ga.Run(beginningPopulation, numberOfGenerations: 3, numberOfElites: 0);
 
             // Validate that the event was raised for each generation epoched.
             Assert.AreEqual(3, generationsEpoched.Count, "Count");
@@ -207,7 +207,7 @@ namespace GeneticAlgorithm.Tests
 
             // Execute the code to test.
             ChromosomeCollection<int> endingPopulation = ga.Run(
-                beginningPopulation, numberOfGenerations: 1, numberOfBestChromosomesToPromote: numberOfChromosomesToTakeForward);
+                beginningPopulation, numberOfGenerations: 1, numberOfElites: numberOfChromosomesToTakeForward);
 
             // Validate that we got back the expected population.
             Assert.AreEqual(generationOne, endingPopulation);
@@ -261,7 +261,7 @@ namespace GeneticAlgorithm.Tests
 
             // Execute the code to test.
             ChromosomeCollection<int> endingPopulation = ga.Run(
-                beginningPopulation, numberOfGenerations: 1, numberOfBestChromosomesToPromote: numberOfChromosomesToTakeForward);
+                beginningPopulation, numberOfGenerations: 1, numberOfElites: numberOfChromosomesToTakeForward);
 
             // Validate that two of the chromosomes in the returned generation have the fitness from the fitness calculator.
             Assert.AreEqual(2, endingPopulation.Count(c => c.Fitness == 1.1));
