@@ -34,9 +34,5 @@ namespace GeneticAlgorithm
         /// The fitness.
         /// </value>
         public double Fitness { get; set; }
-        
-        //// need to add a fitness property, and update it from GA, and get rid of CalculateFitness here.
-        // I then need to make the selector return a clone of the chromosome, so our new population is not referencing 
-        // the same chromosomes as the old population.
     }
 }
